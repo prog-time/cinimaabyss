@@ -1,0 +1,63 @@
+{{- if .Values.proxyService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxy-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: proxy-service
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.proxyService.replicas }}
+  selector:
+    matchLabels:
+      app: proxy-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: proxy-service
+    spec:
+      containers:
+      - name: proxy-service
+        image: "{{ .Values.proxyService.image.repository }}:{{ .Values.proxyService.image.tag }}"
+        imagePullPolicy: {{ .Values.proxyService.image.pullPolicy }}
+        env:
+        - name: MOVIES_SERVICE_URL
+          value: "{{ .Values.proxyService.env.moviesServiceUrl }}"
+        - name: MONOLITH_URL
+          value: "{{ .Values.proxyService.env.monolithUrl }}"
+        ports:
+        - containerPort: {{ .Values.proxyService.service.targetPort }}
+        resources:
+          limits:
+            cpu: {{ .Values.proxyService.resources.limits.cpu }}
+            memory: {{ .Values.proxyService.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.proxyService.resources.requests.cpu }}
+            memory: {{ .Values.proxyService.resources.requests.memory }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxy-service
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: proxy-service
+    app.kubernetes.io/name: {{ include "cinemaabyss.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: {{ .Values.proxyService.service.type }}
+  selector:
+    app: proxy-service
+  ports:
+    - protocol: TCP
+      port: {{ .Values.proxyService.service.port }}
+      targetPort: {{ .Values.proxyService.service.targetPort }}
+{{- end }}
