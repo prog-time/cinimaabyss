@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, jsonify, Response
 import requests
 import os
 
@@ -20,6 +20,10 @@ def proxy_movies():
 def proxy_monolith():
     resp = requests.get(f"{EVENTS_URL}/")
     return Response(resp.content, status=resp.status_code, content_type=resp.headers.get('Content-Type'))
+
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    return jsonify(["Пользователь 1", "Пользователь 2", "Пользователь 3"]), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 8000)))
